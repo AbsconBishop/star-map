@@ -334,12 +334,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--sol);outline-of
 .err:empty{display:none}
 .fbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .disc{margin:4px 0 0;font:400 11.5px/1.55 var(--f-body);color:var(--muted);max-width:62ch}
+.astro-fab{position:fixed;z-index:7;left:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 126px);display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(255,191,105,.22),rgba(255,143,163,.14));border:1px solid rgba(255,191,105,.55);color:var(--text);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 0 0 0 rgba(255,191,105,.4),0 8px 30px rgba(0,0,0,.4);animation:fabPulse 3.2s ease-out 1.2s 3}
+.astro-fab svg{width:26px;height:26px;color:var(--sol);flex:none}
+.astro-fab span{display:flex;flex-direction:column;gap:3px;text-align:left}
+.astro-fab b{font:400 19px/1 var(--f-display);letter-spacing:.01em}
+.astro-fab small{font:500 11px/1 var(--f-body);color:var(--muted)}
+.astro-fab:hover{border-color:var(--sol);background:linear-gradient(135deg,rgba(255,191,105,.32),rgba(255,143,163,.2))}
+@keyframes fabPulse{0%{box-shadow:0 0 0 0 rgba(255,191,105,.45),0 8px 30px rgba(0,0,0,.4)}70%{box-shadow:0 0 0 14px rgba(255,191,105,0),0 8px 30px rgba(0,0,0,.4)}100%{box-shadow:0 0 0 0 rgba(255,191,105,0),0 8px 30px rgba(0,0,0,.4)}}
+@media (prefers-reduced-motion:reduce){.astro-fab{animation:none}}
 /* phone */
 @media (max-width:820px){
   .brand b{font-size:26px}
   .brand span{font-size:8.5px;letter-spacing:.12em}
   .clock .d{font-size:18px}
   .utc{display:none}
+  .astro-fab{bottom:calc(env(safe-area-inset-bottom,0px) + 112px);padding:8px 14px 8px 10px}
+  .astro-fab b{font-size:17px}
+  body:has(#info:not([hidden]):not(.astro-hide)) .astro-fab,body:has(#list:not([hidden])) .astro-fab,body:has(#layers:not([hidden])) .astro-fab{display:none}
   .src{font-size:9.5px}
   .rail{top:calc(env(safe-area-inset-top,0px) + 72px)}
   .rail button{width:40px;height:40px}
@@ -415,6 +428,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--sol);outline-of
       <p class="note"><b>Odkiaľ sú polohy.</b> Každý objekt sa pri načítaní pýta NASA JPL Horizons cez vlastnú serverovú funkciu. Pre okolie aktuálneho času prídu stavové vektory s krokom 2 hodiny, pre históriu a predikciu vzorka celej trajektórie, pre telesá aj aktuálne oskulačné elementy. Po zastavení času na inom dátume sa pre vybraný objekt dotiahne presné okno. Mimo pokrytia JPL a bez spojenia beží analytický model: planéty podľa aproximácie Standish, ostatné z Keplerových elementov a sondy z Lambertových oblúkov medzi preletmi. Pás asteroidov a Kuiperov pás sú ilustračné.</p>
     </div>
   </aside>
+
+  <button id="astroFab" class="astro-fab" aria-label="Otvoriť astrológiu a sprievodcu"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="10" cy="10" r="8"/><circle cx="10" cy="10" r="4.6"/><path d="M10 2v3.4M10 14.6V18M2 10h3.4M14.6 10H18M4.3 4.3l2.4 2.4M13.3 13.3l2.4 2.4M15.7 4.3l-2.4 2.4M6.7 13.3l-2.4 2.4"/></svg><span><b>Astrológia</b><small id="fabSub">Horoskop a sprievodca</small></span></button>
 
   <aside id="astro" class="glass" hidden aria-label="Astrológia">
     <div class="ah">
@@ -1531,11 +1546,12 @@ try{profile=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
 
 // ---------- open / close ----------
 const panel=$('#astro');
-function openAstro(v){const open=v!=null?v:panel.hidden;panel.hidden=!open;$('#bAstro').setAttribute('aria-pressed',String(open));
+function openAstro(v){const open=v!=null?v:panel.hidden;panel.hidden=!open;$('#astroFab').hidden=open;$('#bAstro').setAttribute('aria-pressed',String(open));
   if(open){['list','layers'].forEach(n=>{const p=$('#'+n);if(p&&!p.hidden){p.hidden=true;}});$('#bList').setAttribute('aria-pressed','false');$('#bLayers').setAttribute('aria-pressed','false');
     $('#info').classList.add('astro-hide');if(!natal&&profile)compute();setTab(profile?tab:'form');tick(true);}
   else $('#info').classList.remove('astro-hide');}
 $('#bAstro').onclick=()=>openAstro();
+$('#astroFab').onclick=()=>openAstro(true);
 $('#astroClose').onclick=()=>openAstro(false);
 ['bList','bLayers'].forEach(id=>$('#'+id).addEventListener('click',()=>{if(!panel.hidden)openAstro(false);}));
 function setTab(t){tab=t;for(const b of document.querySelectorAll('#astroTabs button'))b.setAttribute('aria-selected',String(b.dataset.t===t));
@@ -1573,7 +1589,7 @@ $('#fClear').onclick=()=>{profile=null;natal=null;try{localStorage.removeItem(KE
 // ---------- compute ----------
 function birthUtc(p){const [y,m,d]=p.date.split('-').map(Number),[hh,mm,ss]=(p.time||'12:00').split(':').map(Number);return C.localToUtc(y,m,d,hh,mm,ss||0,p.place.tz);}
 function compute(){if(!profile)return;const b=birthUtc(profile);natal=C.chart(b.date,profile.place.lat,profile.place.lon,profile.sys,!profile.unknown);natal.utc=b;winCache.clear();lastMs=null;renderHeader();}
-function renderHeader(){const h=$('#astroWho');if(!profile){h.innerHTML='<span>Zatiaľ bez údajov o narodení</span>';return;}
+function renderHeader(){const fs=$('#fabSub');if(fs)fs.textContent=natal?('Slnko '+T.SIGNS[signOf(natal.pts.sun.lon)].loc+' · sprievodca'):'Horoskop a sprievodca';const h=$('#astroWho');if(!profile){h.innerHTML='<span>Zatiaľ bez údajov o narodení</span>';return;}
   const big=natal?['sun','moon','asc'].filter(k=>natal.pts[k]).map(k=>`<span class="b3"><i class="pg">${GL(T.P[k].g)}</i>${esc(T.SIGNS[signOf(natal.pts[k].lon)].n)}</span>`).join(''):'';
   h.innerHTML=`<b>${esc(profile.name||'Tvoj horoskop')}</b><span>${esc(profile.date.split('-').reverse().join('. '))}${profile.unknown?' · čas neznámy':' · '+esc(profile.time)} · ${esc(profile.place.label)}</span><div class="b3s">${big}</div>`;}
 

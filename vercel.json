@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/body.js": { "maxDuration": 30 },
+    "api/chat.js": { "maxDuration": 60 },
+    "api/geo.js": { "maxDuration": 10 }
+  },
+  "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }] }]
+}
